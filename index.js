@@ -44,16 +44,11 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/food/:email', async(req, res) => {
-            const cursor = foodsCollection.find({ email: req.params.email })
+        app.get('/foods/:buyer_email', async(req, res) => {
+            const cursor = foodsCollection.find({ buyer_email: req.params.buyer_email })
             const result = await cursor.toArray()
             res.send(result)
         })
-        // app.get('/foods/:email', async (req, res) => {
-        //     const cursor = foodsCollection.find({ email: req.params.email })
-        //     const result = await cursor.toArray()
-        //     res.send(result)
-        //   })
 
         app.post('/foods', async(req, res) => {
             const addFoods = req. body
