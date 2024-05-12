@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const app = express()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -44,16 +44,44 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/foods/:buyer_email', async(req, res) => {
+        app.get('/foods/:buyer_email', async (req, res) => {
             const cursor = foodsCollection.find({ buyer_email: req.params.buyer_email })
             const result = await cursor.toArray()
             res.send(result)
         })
 
-        app.post('/foods', async(req, res) => {
-            const addFoods = req. body
+        app.get('/food/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await foodsCollection.findOne(query)
+            res.send(result)
+        })
+
+        app.post('/foods', async (req, res) => {
+            const addFoods = req.body
             const result = await foodsCollection.insertOne(addFoods)
             res.send(result)
+        })
+
+        app.put('/updatefood/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updateFood = req.body
+            console.log(updateFood);
+            const foodItems = {
+                $set: {
+                  name: updateFood.name,
+                  price: updateFood.price,
+                  quantity: updateFood.quantity,
+                  food_origin: updateFood.food_origin,
+                  category: updateFood.category,
+                  image: updateFood.image,
+                  description: updateFood.description,
+                },
+              };
+              const result = await foodsCollection.updateOne(filter, foodItems, options)
+              res.send(result)
         })
 
         // Send a ping to confirm a successful connection
