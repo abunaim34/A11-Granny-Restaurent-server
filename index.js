@@ -39,9 +39,22 @@ async function run() {
         const foodsCollection = client.db('FoodsDB').collection('foods')
         const purchaseFoodCollection = client.db('FoodsDB').collection('purchase')
 
-        app.get('/foods', async (req, res) => {
-            const cursor = foodsCollection.find()
+        
+
+        app.get('/allFoods', async (req, res) => {
+            // const search = req.query.search
+            const search = req.query.search
+            let query = {
+                name: { $regex: `${search}`, $options: 'i' },
+            }
+            const cursor = foodsCollection.find(query)
             const result = await cursor.toArray()
+            res.send(result)
+        })
+
+        app.get('/foods', async (req, res) => {
+            const result = await foodsCollection.find().toArray()
+
             res.send(result)
         })
 
@@ -71,34 +84,34 @@ async function run() {
             const updateFood = req.body
             const foodItems = {
                 $set: {
-                  name: updateFood.name,
-                  price: updateFood.price,
-                  quantity: updateFood.quantity,
-                  food_origin: updateFood.food_origin,
-                  category: updateFood.category,
-                  image: updateFood.image,
-                  description: updateFood.description,
+                    name: updateFood.name,
+                    price: updateFood.price,
+                    quantity: updateFood.quantity,
+                    food_origin: updateFood.food_origin,
+                    category: updateFood.category,
+                    image: updateFood.image,
+                    description: updateFood.description,
                 },
-              };
-              const result = await foodsCollection.updateOne(filter, foodItems, options)
-              res.send(result)
+            };
+            const result = await foodsCollection.updateOne(filter, foodItems, options)
+            res.send(result)
         })
 
 
         // purchase food
-        app.get('/purchase', async(req, res) => {
+        app.get('/purchase', async (req, res) => {
             const cursor = purchaseFoodCollection.find()
             const result = await cursor.toArray()
             res.send(result)
         })
 
-        app.get('/purchase/:buyer_email', async(req, res) => {
+        app.get('/purchase/:buyer_email', async (req, res) => {
             const cursor = purchaseFoodCollection.find({ buyer_email: req.params.buyer_email })
             const result = await cursor.toArray()
             res.send(result)
         })
 
-        app.post('/purchase', async(req, res) => {
+        app.post('/purchase', async (req, res) => {
             const addPurchase = req.body
             const result = await purchaseFoodCollection.insertOne(addPurchase)
             res.send(result)
