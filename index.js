@@ -45,8 +45,8 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/foods/:buyer_email', async (req, res) => {
-            const cursor = foodsCollection.find({ buyer_email: req.params.buyer_email })
+        app.get('/foods/:email', async (req, res) => {
+            const cursor = foodsCollection.find({ email: req.params.email })
             const result = await cursor.toArray()
             res.send(result)
         })
@@ -69,7 +69,6 @@ async function run() {
             const filter = { _id: new ObjectId(id) }
             const options = { upsert: true };
             const updateFood = req.body
-            console.log(updateFood);
             const foodItems = {
                 $set: {
                   name: updateFood.name,
@@ -87,6 +86,18 @@ async function run() {
 
 
         // purchase food
+        app.get('/purchase', async(req, res) => {
+            const cursor = purchaseFoodCollection.find()
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+
+        app.get('/purchase/:buyer_email', async(req, res) => {
+            const cursor = purchaseFoodCollection.find({ buyer_email: req.params.buyer_email })
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+
         app.post('/purchase', async(req, res) => {
             const addPurchase = req.body
             const result = await purchaseFoodCollection.insertOne(addPurchase)
