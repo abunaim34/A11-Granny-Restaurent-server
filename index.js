@@ -37,6 +37,7 @@ async function run() {
         // await client.connect();
 
         const foodsCollection = client.db('FoodsDB').collection('foods')
+        const purchaseFoodCollection = client.db('FoodsDB').collection('purchase')
 
         app.get('/foods', async (req, res) => {
             const cursor = foodsCollection.find()
@@ -82,6 +83,14 @@ async function run() {
               };
               const result = await foodsCollection.updateOne(filter, foodItems, options)
               res.send(result)
+        })
+
+
+        // purchase food
+        app.post('/purchase', async(req, res) => {
+            const addPurchase = req.body
+            const result = await purchaseFoodCollection.insertOne(addPurchase)
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
