@@ -39,13 +39,12 @@ async function run() {
         const foodsCollection = client.db('FoodsDB').collection('foods')
         const purchaseFoodCollection = client.db('FoodsDB').collection('purchase')
 
-        
+
 
         app.get('/allFoods', async (req, res) => {
-            // const search = req.query.search
             const search = req.query.search
-            let query = {
-                name: { $regex: `${search}`, $options: 'i' },
+            const query = {
+                name: { $regex: `${search}`, $options: 'i' }
             }
             const cursor = foodsCollection.find(query)
             const result = await cursor.toArray()
@@ -111,9 +110,23 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/purchaseFood/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await purchaseFoodCollection.findOne(query)
+            res.send(result)
+        })
+
         app.post('/purchase', async (req, res) => {
             const addPurchase = req.body
             const result = await purchaseFoodCollection.insertOne(addPurchase)
+            res.send(result)
+        })
+
+        app.delete('/deletePurchase/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await purchaseFoodCollection.deleteOne(query)
             res.send(result)
         })
 
