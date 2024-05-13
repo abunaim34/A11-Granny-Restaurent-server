@@ -38,8 +38,7 @@ async function run() {
 
         const foodsCollection = client.db('FoodsDB').collection('foods')
         const purchaseFoodCollection = client.db('FoodsDB').collection('purchase')
-
-
+        const galleryCollection = client.db('FoodsDB').collection('gallery')
 
         app.get('/allFoods', async (req, res) => {
             const search = req.query.search
@@ -75,6 +74,7 @@ async function run() {
             const result = await foodsCollection.insertOne(addFoods)
             res.send(result)
         })
+
 
         app.put('/updatefood/:id', async (req, res) => {
             const id = req.params.id
