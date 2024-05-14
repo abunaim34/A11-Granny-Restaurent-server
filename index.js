@@ -1,5 +1,7 @@
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 const app = express()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
@@ -18,6 +20,7 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(cookieParser())
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zyfftle.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -31,6 +34,22 @@ const client = new MongoClient(uri, {
     }
 });
 
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token
+    if(!token) return res.status(401).send({message: 'unauthorized access'})
+    if (token) {
+        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+            if (err) {
+                console.log(err);
+                return res.status(401).send({message: 'unauthorized access'})
+            }
+            console.log(decoded);
+            req.user = decoded
+            next()
+        })
+    }
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -38,8 +57,30 @@ async function run() {
 
         const foodsCollection = client.db('FoodsDB').collection('foods')
         const purchaseFoodCollection = client.db('FoodsDB').collection('purchase')
-        const galleryCollection = client.db('FoodsDB').collection('gallery')
 
+        // token
+        app.post('/jwt', async (req, res) => {
+            const user = req.body
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' })
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            })
+                .send({ success: true })
+        })
+
+        app.get('/logOut', (req, res) => {
+            res.clearCookie('token', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 0
+            })
+                .send({ success: true })
+        })
+
+        // foods
         app.get('/allFoods', async (req, res) => {
             const search = req.query.search
             const query = {
@@ -52,12 +93,17 @@ async function run() {
 
         app.get('/foods', async (req, res) => {
             const result = await foodsCollection.find().toArray()
-
             res.send(result)
         })
 
-        app.get('/foods/:email', async (req, res) => {
-            const cursor = foodsCollection.find({ email: req.params.email })
+        app.get('/foods/:email', verifyToken, async (req, res) => {
+            const tokenEmail = req.user.email
+            const email  = req.params.email
+            if(tokenEmail !== email){
+                return res.status(403).send({message: 'forbidden access'})
+            }
+            const query = {email: email}
+            const cursor = foodsCollection.find(query)
             const result = await cursor.toArray()
             res.send(result)
         })
@@ -104,8 +150,19 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/purchase/:buyer_email', async (req, res) => {
-            const cursor = purchaseFoodCollection.find({ buyer_email: req.params.buyer_email })
+        app.get('/purchaseUser/:buyer_email', verifyToken, async (req, res) => {
+            const tokenEmail = req.user.email
+            const email = req.params.buyer_email
+            if(tokenEmail !== email){
+                return res.status(403).send({message: 'forbidden access'})
+            }
+            const query = {buyer_email: email}
+            const cursor = purchaseFoodCollection.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+        app.get('/purchase/:name', async (req, res) => {
+            const cursor = purchaseFoodCollection.find({ name: req.params.name })
             const result = await cursor.toArray()
             res.send(result)
         })
