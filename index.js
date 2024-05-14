@@ -43,7 +43,6 @@ const verifyToken = (req, res, next) => {
                 console.log(err);
                 return res.status(401).send({message: 'unauthorized access'})
             }
-            console.log(decoded);
             req.user = decoded
             next()
         })
@@ -161,8 +160,8 @@ async function run() {
             const result = await cursor.toArray()
             res.send(result)
         })
-        app.get('/purchase/:name', async (req, res) => {
-            const cursor = purchaseFoodCollection.find({ name: req.params.name })
+        app.get('/purchase/:category', async (req, res) => {
+            const cursor = purchaseFoodCollection.find({ category: req.params.category })
             const result = await cursor.toArray()
             res.send(result)
         })
